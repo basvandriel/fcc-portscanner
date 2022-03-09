@@ -1,31 +1,13 @@
+import re
 import socket
 
-import re
+from is_ip import is_ip
+from is_open import is_open
+
 from common_ports import ports_and_services
 
-
-def is_open(ip, port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(0.5)
-
-    try:
-        s.connect((ip, int(port)))
-        s.shutdown(2)
-
-        s.close()
-        return True
-    except:
-        s.close()
-        return False
-
-
-def is_ip(address):
-    match = re.match(r"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$", address)
-
-    if not bool(match):
-        return False
-
-    return True
+# The number of spaces between table headers
+GAP = " " * 5
 
 
 def get_open_ports(target, port_range, verbose: bool = False):
@@ -41,15 +23,12 @@ def get_open_ports(target, port_range, verbose: bool = False):
         unit = "hostname" if not valid_ip else "IP address"
         return f"Error: Invalid {unit}"
 
-    # Get the hostname
+    host = target
+
     try:
         host = socket.gethostbyaddr(target)[0] if valid_ip else target
     except:
-        host = target
         add_ip_hint = False
-
-    # The section from port to service has 5 spaces
-    gap = "     "
 
     banner: str = f"Open ports for {host}"
 
@@ -57,14 +36,14 @@ def get_open_ports(target, port_range, verbose: bool = False):
         banner += f" ({ ip })"
 
     # And add the table headers
-    banner += f"\nPORT{gap}SERVICE"
+    banner += f"\nPORT{GAP}SERVICE"
 
     for port in range(port_range[0], port_range[1] + 1):
         if not is_open(ip, port):
             continue
 
         # Yeah we need to keep track
-        curr_gap = gap
+        curr_gap = GAP
 
         open_ports.append(port)
         service = ports_and_services.get(port)
